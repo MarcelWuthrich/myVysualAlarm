@@ -22,6 +22,9 @@ Partial Class SettingsForm
     'Ne la modifiez pas à l'aide de l'éditeur de code.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        lblTitle = New Label()
+        lblSubtitle = New Label()
+        grpDatabase = New GroupBox()
         lblDatabaseServer = New Label()
         txtDatabaseServer = New TextBox()
         lblDatabasePort = New Label()
@@ -53,14 +56,44 @@ Partial Class SettingsForm
         chkShowDatabasePassword = New CheckBox()
         btnBrowsePrivateKey = New Button()
         CType(nudDatabasePort, ComponentModel.ISupportInitialize).BeginInit()
+        grpDatabase.SuspendLayout()
         grpSsh.SuspendLayout()
         CType(nudSshPort, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
+        ' lblTitle
+        ' 
+        lblTitle.AutoSize = True
+        lblTitle.Font = New Font("Segoe UI Semibold", 16F)
+        lblTitle.Location = New Point(28, 22)
+        lblTitle.Name = "lblTitle"
+        lblTitle.Size = New Size(222, 30)
+        lblTitle.TabIndex = 0
+        lblTitle.Text = "Paramètres de connexion"
+        ' 
+        ' lblSubtitle
+        ' 
+        lblSubtitle.AutoSize = True
+        lblSubtitle.Location = New Point(28, 55)
+        lblSubtitle.Name = "lblSubtitle"
+        lblSubtitle.Size = New Size(284, 15)
+        lblSubtitle.TabIndex = 1
+        lblSubtitle.Text = "Configurez l'accès à votre base de données MariaDB."
+        ' 
+        ' grpDatabase
+        ' 
+        grpDatabase.Location = New Point(28, 88)
+        grpDatabase.Name = "grpDatabase"
+        grpDatabase.Size = New Size(594, 245)
+        grpDatabase.TabIndex = 2
+        grpDatabase.TabStop = False
+        grpDatabase.Text = "Base de données MariaDB"
+        grpDatabase.Controls.AddRange(New Control() {lblDatabaseServer, txtDatabaseServer, lblDatabasePort, nudDatabasePort, lblDatabaseName, txtDatabaseName, txtDatabaseUser, lblDatabaseUser, txtDatabasePassword, lblDatabasePassword, chkShowDatabasePassword})
+        ' 
         ' lblDatabaseServer
         ' 
         lblDatabaseServer.AutoSize = True
-        lblDatabaseServer.Location = New Point(25, 25)
+        lblDatabaseServer.Location = New Point(22, 41)
         lblDatabaseServer.Name = "lblDatabaseServer"
         lblDatabaseServer.Size = New Size(73, 15)
         lblDatabaseServer.TabIndex = 0
@@ -68,7 +101,8 @@ Partial Class SettingsForm
         ' 
         ' txtDatabaseServer
         ' 
-        txtDatabaseServer.Location = New Point(154, 22)
+        txtDatabaseServer.Location = New Point(185, 36)
+        txtDatabaseServer.Size = New Size(410, 27)
         txtDatabaseServer.Name = "txtDatabaseServer"
         txtDatabaseServer.Size = New Size(216, 23)
         txtDatabaseServer.TabIndex = 1
@@ -76,7 +110,7 @@ Partial Class SettingsForm
         ' lblDatabasePort
         ' 
         lblDatabasePort.AutoSize = True
-        lblDatabasePort.Location = New Point(25, 60)
+        lblDatabasePort.Location = New Point(22, 79)
         lblDatabasePort.Name = "lblDatabasePort"
         lblDatabasePort.Size = New Size(35, 15)
         lblDatabasePort.TabIndex = 2
@@ -84,7 +118,8 @@ Partial Class SettingsForm
         ' 
         ' nudDatabasePort
         ' 
-        nudDatabasePort.Location = New Point(154, 58)
+        nudDatabasePort.Location = New Point(185, 74)
+        nudDatabasePort.Size = New Size(120, 27)
         nudDatabasePort.Maximum = New Decimal(New Integer() {50000, 0, 0, 0})
         nudDatabasePort.Name = "nudDatabasePort"
         nudDatabasePort.Size = New Size(216, 23)
@@ -93,7 +128,7 @@ Partial Class SettingsForm
         ' lblDatabaseName
         ' 
         lblDatabaseName.AutoSize = True
-        lblDatabaseName.Location = New Point(25, 97)
+        lblDatabaseName.Location = New Point(22, 117)
         lblDatabaseName.Name = "lblDatabaseName"
         lblDatabaseName.Size = New Size(101, 15)
         lblDatabaseName.TabIndex = 4
@@ -101,14 +136,16 @@ Partial Class SettingsForm
         ' 
         ' txtDatabaseName
         ' 
-        txtDatabaseName.Location = New Point(154, 94)
+        txtDatabaseName.Location = New Point(185, 112)
+        txtDatabaseName.Size = New Size(410, 27)
         txtDatabaseName.Name = "txtDatabaseName"
         txtDatabaseName.Size = New Size(216, 23)
         txtDatabaseName.TabIndex = 5
         ' 
         ' txtDatabaseUser
         ' 
-        txtDatabaseUser.Location = New Point(154, 129)
+        txtDatabaseUser.Location = New Point(185, 150)
+        txtDatabaseUser.Size = New Size(410, 27)
         txtDatabaseUser.Name = "txtDatabaseUser"
         txtDatabaseUser.Size = New Size(216, 23)
         txtDatabaseUser.TabIndex = 7
@@ -116,7 +153,7 @@ Partial Class SettingsForm
         ' lblDatabaseUser
         ' 
         lblDatabaseUser.AutoSize = True
-        lblDatabaseUser.Location = New Point(25, 132)
+        lblDatabaseUser.Location = New Point(22, 155)
         lblDatabaseUser.Name = "lblDatabaseUser"
         lblDatabaseUser.Size = New Size(66, 15)
         lblDatabaseUser.TabIndex = 6
@@ -124,7 +161,8 @@ Partial Class SettingsForm
         ' 
         ' txtDatabasePassword
         ' 
-        txtDatabasePassword.Location = New Point(154, 165)
+        txtDatabasePassword.Location = New Point(185, 188)
+        txtDatabasePassword.Size = New Size(280, 27)
         txtDatabasePassword.Name = "txtDatabasePassword"
         txtDatabasePassword.Size = New Size(216, 23)
         txtDatabasePassword.TabIndex = 9
@@ -133,7 +171,7 @@ Partial Class SettingsForm
         ' lblDatabasePassword
         ' 
         lblDatabasePassword.AutoSize = True
-        lblDatabasePassword.Location = New Point(25, 168)
+        lblDatabasePassword.Location = New Point(22, 193)
         lblDatabasePassword.Name = "lblDatabasePassword"
         lblDatabasePassword.Size = New Size(83, 15)
         lblDatabasePassword.TabIndex = 8
@@ -141,7 +179,8 @@ Partial Class SettingsForm
         ' 
         ' btnTestConnection
         ' 
-        btnTestConnection.Location = New Point(154, 250)
+        btnTestConnection.Location = New Point(28, 680)
+        btnTestConnection.Size = New Size(155, 30)
         btnTestConnection.Name = "btnTestConnection"
         btnTestConnection.Size = New Size(216, 23)
         btnTestConnection.TabIndex = 10
@@ -150,7 +189,8 @@ Partial Class SettingsForm
         ' 
         ' btnSave
         ' 
-        btnSave.Location = New Point(154, 290)
+        btnSave.Location = New Point(445, 680)
+        btnSave.Size = New Size(82, 30)
         btnSave.Name = "btnSave"
         btnSave.Size = New Size(75, 23)
         btnSave.TabIndex = 11
@@ -159,26 +199,28 @@ Partial Class SettingsForm
         ' 
         ' btnCancel
         ' 
-        btnCancel.Location = New Point(295, 290)
+        btnCancel.Location = New Point(535, 680)
+        btnCancel.Size = New Size(87, 30)
         btnCancel.Name = "btnCancel"
         btnCancel.Size = New Size(75, 23)
         btnCancel.TabIndex = 12
-        btnCancel.Text = "Annuler"
+        btnCancel.Text = "Fermer"
         btnCancel.UseVisualStyleBackColor = True
         ' 
         ' lblConnectionStatus
         ' 
         lblConnectionStatus.AutoSize = True
-        lblConnectionStatus.Location = New Point(154, 211)
+        lblConnectionStatus.Location = New Point(28, 625)
+        lblConnectionStatus.Size = New Size(594, 32)
         lblConnectionStatus.Name = "lblConnectionStatus"
         lblConnectionStatus.Size = New Size(124, 15)
         lblConnectionStatus.TabIndex = 13
-        lblConnectionStatus.Text = "Statut de la connexion"
+        lblConnectionStatus.Text = ""
         ' 
         ' chkUseSsh
         ' 
         chkUseSsh.AutoSize = True
-        chkUseSsh.Location = New Point(25, 345)
+        chkUseSsh.Location = New Point(28, 355)
         chkUseSsh.Name = "chkUseSsh"
         chkUseSsh.Size = New Size(140, 19)
         chkUseSsh.TabIndex = 14
@@ -198,7 +240,8 @@ Partial Class SettingsForm
         grpSsh.Controls.Add(lblSshPort)
         grpSsh.Controls.Add(txtSshServer)
         grpSsh.Controls.Add(lblSshServer)
-        grpSsh.Location = New Point(25, 415)
+        grpSsh.Location = New Point(28, 385)
+        grpSsh.Size = New Size(594, 225)
         grpSsh.Name = "grpSsh"
         grpSsh.Size = New Size(356, 252)
         grpSsh.TabIndex = 15
@@ -297,7 +340,8 @@ Partial Class SettingsForm
         ' 
         ' progressBar
         ' 
-        progressBar.Location = New Point(118, 376)
+        progressBar.Location = New Point(28, 663)
+        progressBar.Size = New Size(594, 5)
         progressBar.Name = "progressBar"
         progressBar.Size = New Size(100, 23)
         progressBar.Style = ProgressBarStyle.Marquee
@@ -307,11 +351,11 @@ Partial Class SettingsForm
         ' chkShowDatabasePassword
         ' 
         chkShowDatabasePassword.AutoSize = True
-        chkShowDatabasePassword.Location = New Point(460, 169)
+        chkShowDatabasePassword.Location = New Point(475, 190)
         chkShowDatabasePassword.Name = "chkShowDatabasePassword"
-        chkShowDatabasePassword.Size = New Size(84, 19)
+        chkShowDatabasePassword.Size = New Size(90, 19)
         chkShowDatabasePassword.TabIndex = 17
-        chkShowDatabasePassword.Text = "CheckBox1"
+        chkShowDatabasePassword.Text = "Afficher"
         chkShowDatabasePassword.UseVisualStyleBackColor = True
         ' 
         ' btnBrowsePrivateKey
@@ -327,9 +371,11 @@ Partial Class SettingsForm
         ' 
         AutoScaleDimensions = New SizeF(7F, 15F)
         AutoScaleMode = AutoScaleMode.Font
-        ClientSize = New Size(747, 742)
+        ClientSize = New Size(650, 720)
         Controls.Add(btnBrowsePrivateKey)
-        Controls.Add(chkShowDatabasePassword)
+        Controls.Add(grpDatabase)
+        Controls.Add(lblSubtitle)
+        Controls.Add(lblTitle)
         Controls.Add(progressBar)
         Controls.Add(grpSsh)
         Controls.Add(chkUseSsh)
@@ -337,16 +383,6 @@ Partial Class SettingsForm
         Controls.Add(btnCancel)
         Controls.Add(btnSave)
         Controls.Add(btnTestConnection)
-        Controls.Add(txtDatabasePassword)
-        Controls.Add(lblDatabasePassword)
-        Controls.Add(txtDatabaseUser)
-        Controls.Add(lblDatabaseUser)
-        Controls.Add(txtDatabaseName)
-        Controls.Add(lblDatabaseName)
-        Controls.Add(nudDatabasePort)
-        Controls.Add(lblDatabasePort)
-        Controls.Add(txtDatabaseServer)
-        Controls.Add(lblDatabaseServer)
         FormBorderStyle = FormBorderStyle.FixedDialog
         MaximizeBox = False
         MinimizeBox = False
@@ -355,6 +391,8 @@ Partial Class SettingsForm
         StartPosition = FormStartPosition.CenterParent
         Text = "Paramètres"
         CType(nudDatabasePort, ComponentModel.ISupportInitialize).EndInit()
+        grpDatabase.ResumeLayout(False)
+        grpDatabase.PerformLayout()
         grpSsh.ResumeLayout(False)
         grpSsh.PerformLayout()
         CType(nudSshPort, ComponentModel.ISupportInitialize).EndInit()
@@ -362,6 +400,9 @@ Partial Class SettingsForm
         PerformLayout()
     End Sub
 
+    Friend WithEvents lblTitle As Label
+    Friend WithEvents lblSubtitle As Label
+    Friend WithEvents grpDatabase As GroupBox
     Friend WithEvents lblDatabaseServer As Label
     Friend WithEvents txtDatabaseServer As TextBox
     Friend WithEvents lblDatabasePort As Label
