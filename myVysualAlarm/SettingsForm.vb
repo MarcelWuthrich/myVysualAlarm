@@ -224,7 +224,7 @@ Public Class SettingsForm
 
             Using manager As New DatabaseConnectionManager()
                 Dim connection As MySqlConnection = Await manager.ConnectAsync(CreateSettingsFromForm())
-                Using command As New MySqlCommand("SELECT ety_id, ety_name, ety_alert_in_monitoring FROM gbl_entity ORDER BY ety_name", connection)
+                Using command As New MySqlCommand("SELECT ety_id, ety_name, ety_alert_in_monitoring FROM gbl_entity WHERE parent_id IS NOT NULL ORDER BY ety_name", connection)
                     Using reader As MySqlDataReader = Await command.ExecuteReaderAsync()
                         While Await reader.ReadAsync()
                             Dim clientId As String = Convert.ToString(reader("ety_id"))
@@ -545,7 +545,7 @@ Public Class SettingsForm
             settings.SshPrivateKeyFile =
                 txtSshPrivateKey.Text.Trim()
 
-        settings.SshPassphrase =
+            settings.SshPassphrase =
             txtSshPassphrase.Text
 
         End If

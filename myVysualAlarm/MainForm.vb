@@ -3,6 +3,7 @@
     Private _databaseConnectionManager As DatabaseConnectionManager
 
     Private _monitoringService As MonitoringService
+    Private _defaultNotifyIcon As Icon
 
     ' Indique si l'application a réellement le droit de se fermer.
     ' Lorsque l'utilisateur clique sur X, nous voulons simplement
@@ -37,14 +38,14 @@
         End Using
 
     End Sub
-    Private Sub MonitoringStatusChanged(status As String)
+    Private Sub MonitoringStatusChanged(result As MonitoringResult)
 
         If Me.InvokeRequired Then
 
             Me.Invoke(
             New Action(
                 Sub()
-                    MonitoringStatusChanged(status)
+                    MonitoringStatusChanged(result)
                 End Sub
             )
         )
@@ -59,34 +60,47 @@
         End If
 
 
-        Dim statusItem As ToolStripMenuItem =
-        TryCast(
-            myVysualAlarmNotifyIcon.ContextMenuStrip.Items(0),
-            ToolStripMenuItem
-        )
+        Dim menu As ContextMenuStrip = myVysualAlarmNotifyIcon.ContextMenuStrip
+        menu.Items.Clear()
 
+        Dim hasAlarm As Boolean = result.AlertCount > 0 OrElse result.Message.StartsWith("Erreur", StringComparison.OrdinalIgnoreCase)
+        Dim statusItem As New ToolStripMenuItem(result.Message) With {.ForeColor = If(hasAlarm, Color.Red, Color.Green), .Enabled = False}
+        menu.Items.Add(statusItem)
 
-        If statusItem IsNot Nothing Then
-
-            statusItem.Text = status
-
-            If status.Contains("PAS OK") Then
-                statusItem.ForeColor = Color.Red
-
-            ElseIf status.Contains("OK") Then
-                statusItem.ForeColor = Color.Green
-
-            Else
-                statusItem.ForeColor = SystemColors.MenuText
-            End If
-
+        If result.IsHistoricalDemoMode Then
+            menu.Items.Add(New ToolStripMenuItem("Mode démonstration : données historiques recalées") With {.Enabled = False, .ForeColor = Color.DarkOrange})
         End If
+
+        For Each client As MonitoringAlertClient In result.AlertClients
+            Dim clientName As String = If(String.IsNullOrWhiteSpace(client.ClientName), client.ClientId, client.ClientName)
+            Dim detail As String = If(client.LastActivity.HasValue, $"Dernière transmission : {client.LastActivity:dd.MM.yyyy HH:mm}", "Aucune donnée transmise")
+            Dim alertItem As New ToolStripMenuItem($"🔴 Client en alarme : {clientName}") With {.ForeColor = Color.Red, .Font = New Font(SystemFonts.MenuFont, FontStyle.Bold), .ToolTipText = detail}
+            AddHandler alertItem.Click, Sub()
+                                            MessageBox.Show($"Client : {clientName}{Environment.NewLine}{detail}", "Alerte de surveillance", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                        End Sub
+            menu.Items.Add(alertItem)
+        Next
+
+        menu.Items.Add(New ToolStripSeparator())
+        Dim openItem As New ToolStripMenuItem("Ouvrir myVysualAlarm")
+        AddHandler openItem.Click, Sub() ShowMainWindow()
+        menu.Items.Add(openItem)
+        Dim exitItem As New ToolStripMenuItem("Quitter")
+        AddHandler exitItem.Click, Sub()
+                                       _allowClose = True
+                                       Application.Exit()
+                                   End Sub
+        menu.Items.Add(exitItem)
+
+        myVysualAlarmNotifyIcon.Icon = If(hasAlarm, SystemIcons.Error, _defaultNotifyIcon)
+        myVysualAlarmNotifyIcon.Text = If(hasAlarm, $"myVysualAlarm — {result.AlertCount} alarme(s)", "myVysualAlarm — Surveillance OK")
     End Sub
     Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
         ' Configuration de l'icône dans la zone de notification
         If myVysualAlarmNotifyIcon.Icon IsNot Nothing Then
             Icon = myVysualAlarmNotifyIcon.Icon
+            _defaultNotifyIcon = myVysualAlarmNotifyIcon.Icon
         End If
 
         myVysualAlarmNotifyIcon.Visible = True
