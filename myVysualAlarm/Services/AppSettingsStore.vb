@@ -1,6 +1,7 @@
 Imports System.Security.Cryptography
 Imports System.Text
 Imports Microsoft.Win32
+Imports System.Linq
 
 ''' <summary>
 ''' Enregistre les paramètres de connexion pour l'utilisateur Windows courant.
@@ -32,6 +33,7 @@ Public NotInheritable Class AppSettingsStore
             settings.SshPrivateKeyFile = ReadString(key, "SshPrivateKeyFile", settings.SshPrivateKeyFile)
             settings.SshPassphrase = Unprotect(ReadString(key, "SshPassphrase", ""))
             settings.SshLocalPort = ReadInteger(key, "SshLocalPort", settings.SshLocalPort)
+            settings.AlertAfterInactivityMinutes = ReadInteger(key, "AlertAfterInactivityMinutes", settings.AlertAfterInactivityMinutes)
         End Using
 
         Return settings
@@ -53,6 +55,37 @@ Public NotInheritable Class AppSettingsStore
             key.SetValue("SshPrivateKeyFile", settings.SshPrivateKeyFile)
             key.SetValue("SshPassphrase", Protect(settings.SshPassphrase))
             key.SetValue("SshLocalPort", settings.SshLocalPort)
+            key.SetValue("AlertAfterInactivityMinutes", settings.AlertAfterInactivityMinutes)
+        End Using
+
+    End Sub
+
+    Public Shared Function LoadSelectedClientIds(ByRef hasSavedSelection As Boolean) As HashSet(Of String)
+
+        hasSavedSelection = False
+        Dim selectedIds As New HashSet(Of String)(StringComparer.Ordinal)
+
+        Using key As RegistryKey = Registry.CurrentUser.OpenSubKey(RegistryPath)
+            If key Is Nothing OrElse key.GetValue("SelectedClientIds") Is Nothing Then
+                Return selectedIds
+            End If
+
+            hasSavedSelection = True
+            Dim value As String = Convert.ToString(key.GetValue("SelectedClientIds"))
+
+            For Each valuePart As String In value.Split(","c, StringSplitOptions.RemoveEmptyEntries)
+                selectedIds.Add(valuePart)
+            Next
+        End Using
+
+        Return selectedIds
+
+    End Function
+
+    Public Shared Sub SaveSelectedClientIds(clientIds As IEnumerable(Of String))
+
+        Using key As RegistryKey = Registry.CurrentUser.CreateSubKey(RegistryPath)
+            key.SetValue("SelectedClientIds", String.Join(",", clientIds.OrderBy(Function(id) id)))
         End Using
 
     End Sub

@@ -45,4 +45,7 @@
     ' 0 = choisir automatiquement un port libre.
     Public Property SshLocalPort As Integer = 0
 
+    ' Délai sans activité avant le déclenchement d'une alarme.
+    Public Property AlertAfterInactivityMinutes As Integer = 10
+
 End Class

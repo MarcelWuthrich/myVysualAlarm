@@ -1,5 +1,6 @@
 ﻿Imports System.ComponentModel
 Imports System.IO
+Imports MySqlConnector
 
 Public Class SettingsForm
 
@@ -20,6 +21,19 @@ Public Class SettingsForm
     <Browsable(False)>
     <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
     Public Property ConnectionManager As DatabaseConnectionManager
+
+    Private tabSettings As TabControl
+    Private tabConnection As TabPage
+    Private tabClients As TabPage
+    Private tabParameters As TabPage
+    Private clientsGrid As DataGridView
+    Private btnSelectAllClients As Button
+    Private btnDeselectAllClients As Button
+    Private btnReloadClients As Button
+    Private lblClientsInfo As Label
+    Private _clientsLoaded As Boolean
+    Private _isLoadingClients As Boolean
+    Private txtAlertAfterInactivityMinutes As TextBox
 
 
     Private Sub SettingsForm_Load(
@@ -48,6 +62,7 @@ Public Class SettingsForm
         UpdateSshControls()
 
         ConfigureProfessionalLayout()
+        ConfigureTabs()
 
     End Sub
 
@@ -117,13 +132,13 @@ Public Class SettingsForm
         chkShowSshPassphrase.AutoSize = True
         chkShowSshPassphrase.Location = New Point(inputLeft + 290, 186)
 
-        lblConnectionStatus.AutoEllipsis = True
-        lblConnectionStatus.AutoSize = False
         lblConnectionStatus.BorderStyle = BorderStyle.FixedSingle
         lblConnectionStatus.ForeColor = Color.FromArgb(75, 85, 99)
         lblConnectionStatus.Location = New Point(contentLeft, 625)
-        lblConnectionStatus.Padding = New Padding(10, 6, 10, 6)
         lblConnectionStatus.Size = New Size(594, 32)
+        lblConnectionStatus.Multiline = True
+        lblConnectionStatus.ReadOnly = True
+        lblConnectionStatus.ScrollBars = ScrollBars.Vertical
         lblConnectionStatus.Text = ""
         lblConnectionStatus.Visible = False
 
@@ -147,6 +162,153 @@ Public Class SettingsForm
         AcceptButton = btnSave
         CancelButton = btnCancel
 
+    End Sub
+
+
+    Private Sub ConfigureTabs()
+
+        ClientSize = New Size(670, 820)
+        tabSettings = New TabControl() With {.Location = New Point(10, 10), .Size = New Size(650, 750), .Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right}
+        tabConnection = New TabPage("Connexion DB") With {.BackColor = BackColor}
+        tabClients = New TabPage("Clients") With {.BackColor = BackColor}
+        tabParameters = New TabPage("Paramètres") With {.BackColor = BackColor}
+        tabSettings.TabPages.AddRange(New TabPage() {tabConnection, tabClients, tabParameters})
+
+        tabConnection.Controls.AddRange(New Control() {lblTitle, lblSubtitle, grpDatabase, chkUseSsh, grpSsh, lblConnectionStatus, progressBar, btnTestConnection})
+        Controls.Add(tabSettings)
+
+        btnSave.Location = New Point(465, 770)
+        btnCancel.Location = New Point(555, 770)
+        Controls.Add(btnSave)
+        Controls.Add(btnCancel)
+
+        clientsGrid = New DataGridView() With {.Location = New Point(24, 62), .Size = New Size(580, 575), .Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right, .AllowUserToAddRows = False, .AllowUserToDeleteRows = False, .AllowUserToResizeRows = False, .AutoGenerateColumns = False, .BackgroundColor = Color.White, .BorderStyle = BorderStyle.FixedSingle, .RowHeadersVisible = False}
+        clientsGrid.Columns.Add(New DataGridViewCheckBoxColumn() With {.Name = "Selected", .HeaderText = "Surveiller", .Width = 85})
+        clientsGrid.Columns.Add(New DataGridViewTextBoxColumn() With {.Name = "ClientName", .HeaderText = "Client", .AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, .ReadOnly = True})
+        clientsGrid.Columns.Add(New DataGridViewTextBoxColumn() With {.Name = "ClientId", .Visible = False})
+
+        lblClientsInfo = New Label() With {.AutoSize = True, .Location = New Point(24, 24), .Text = "Sélectionnez les clients à inclure dans la surveillance."}
+        btnSelectAllClients = New Button() With {.Text = "Tout sélectionner", .Location = New Point(24, 655), .Size = New Size(125, 30), .Anchor = AnchorStyles.Bottom Or AnchorStyles.Left}
+        btnDeselectAllClients = New Button() With {.Text = "Tout désélectionner", .Location = New Point(157, 655), .Size = New Size(140, 30), .Anchor = AnchorStyles.Bottom Or AnchorStyles.Left}
+        btnReloadClients = New Button() With {.Text = "Relire la configuration DB", .Location = New Point(315, 655), .Size = New Size(200, 30), .Anchor = AnchorStyles.Bottom Or AnchorStyles.Right}
+        tabClients.Controls.AddRange(New Control() {lblClientsInfo, clientsGrid, btnSelectAllClients, btnDeselectAllClients, btnReloadClients})
+
+        Dim lblAlertAfterInactivityMinutes As New Label() With {.AutoSize = True, .Location = New Point(24, 32), .Text = "Alerte après x minutes d'inactivité"}
+        txtAlertAfterInactivityMinutes = New TextBox() With {.Location = New Point(24, 58), .Size = New Size(120, 27), .Text = AppSettingsStore.Load().AlertAfterInactivityMinutes.ToString()}
+        tabParameters.Controls.AddRange(New Control() {lblAlertAfterInactivityMinutes, txtAlertAfterInactivityMinutes})
+
+        AddHandler tabSettings.SelectedIndexChanged, AddressOf tabSettings_SelectedIndexChanged
+        AddHandler clientsGrid.CurrentCellDirtyStateChanged, AddressOf clientsGrid_CurrentCellDirtyStateChanged
+        AddHandler clientsGrid.CellValueChanged, AddressOf clientsGrid_CellValueChanged
+        AddHandler btnSelectAllClients.Click, AddressOf btnSelectAllClients_Click
+        AddHandler btnDeselectAllClients.Click, AddressOf btnDeselectAllClients_Click
+        AddHandler btnReloadClients.Click, AddressOf btnReloadClients_Click
+
+    End Sub
+
+
+    Private Async Sub tabSettings_SelectedIndexChanged(sender As Object, e As EventArgs)
+        If tabSettings.SelectedTab Is tabClients AndAlso Not _clientsLoaded Then Await LoadClientsAsync(False)
+    End Sub
+
+
+    Private Async Function LoadClientsAsync(useDatabaseDefaults As Boolean) As Task
+
+        _isLoadingClients = True
+        lblClientsInfo.Text = "Chargement des clients..."
+        clientsGrid.Rows.Clear()
+
+        Try
+            Dim hasSavedSelection As Boolean = False
+            Dim savedIds As HashSet(Of String) = AppSettingsStore.LoadSelectedClientIds(hasSavedSelection)
+
+            Using manager As New DatabaseConnectionManager()
+                Dim connection As MySqlConnection = Await manager.ConnectAsync(CreateSettingsFromForm())
+                Using command As New MySqlCommand("SELECT ety_id, ety_name, ety_alert_in_monitoring FROM gbl_entity ORDER BY ety_name", connection)
+                    Using reader As MySqlDataReader = Await command.ExecuteReaderAsync()
+                        While Await reader.ReadAsync()
+                            Dim clientId As String = Convert.ToString(reader("ety_id"))
+                            Dim isEnabledInDatabase As Boolean = IsMonitoringEnabled(reader("ety_alert_in_monitoring"))
+                            ' La base fournit le choix initial ; une sélection locale existante
+                            ' est prioritaire lors des ouvertures suivantes.
+                            Dim selected As Boolean = If(useDatabaseDefaults OrElse Not hasSavedSelection, isEnabledInDatabase, savedIds.Contains(clientId))
+                            clientsGrid.Rows.Add(selected, reader.GetString("ety_name"), clientId)
+                        End While
+                    End Using
+                End Using
+            End Using
+
+            _clientsLoaded = True
+            lblClientsInfo.Text = $"{clientsGrid.Rows.Count} client(s) chargé(s)."
+            If useDatabaseDefaults OrElse Not hasSavedSelection Then
+                _isLoadingClients = False
+                SaveClientSelection()
+            End If
+
+        Catch ex As Exception
+            lblClientsInfo.Text = "Impossible de charger les clients : " & GetFriendlyErrorMessage(ex)
+        Finally
+            _isLoadingClients = False
+        End Try
+
+    End Function
+
+
+    Private Sub SaveClientSelection()
+        If _isLoadingClients Then Return
+        Dim selectedIds As New List(Of String)()
+        For Each row As DataGridViewRow In clientsGrid.Rows
+            If Convert.ToBoolean(row.Cells("Selected").Value) Then selectedIds.Add(Convert.ToString(row.Cells("ClientId").Value))
+        Next
+        AppSettingsStore.SaveSelectedClientIds(selectedIds)
+    End Sub
+
+
+    Private Function IsMonitoringEnabled(value As Object) As Boolean
+
+        If value Is Nothing OrElse value Is DBNull.Value Then Return False
+
+        Dim textValue As String = Convert.ToString(value).Trim()
+        Return String.Equals(textValue, "1", StringComparison.OrdinalIgnoreCase) OrElse
+               String.Equals(textValue, "true", StringComparison.OrdinalIgnoreCase) OrElse
+               String.Equals(textValue, "yes", StringComparison.OrdinalIgnoreCase) OrElse
+               String.Equals(textValue, "y", StringComparison.OrdinalIgnoreCase)
+
+    End Function
+
+
+    Private Sub clientsGrid_CurrentCellDirtyStateChanged(sender As Object, e As EventArgs)
+        If clientsGrid.IsCurrentCellDirty Then clientsGrid.CommitEdit(DataGridViewDataErrorContexts.Commit)
+    End Sub
+
+
+    Private Sub clientsGrid_CellValueChanged(sender As Object, e As DataGridViewCellEventArgs)
+        If e.ColumnIndex = 0 Then SaveClientSelection()
+    End Sub
+
+
+    Private Sub btnSelectAllClients_Click(sender As Object, e As EventArgs)
+        SetAllClientsSelected(True)
+    End Sub
+
+
+    Private Sub btnDeselectAllClients_Click(sender As Object, e As EventArgs)
+        SetAllClientsSelected(False)
+    End Sub
+
+
+    Private Sub SetAllClientsSelected(selected As Boolean)
+        _isLoadingClients = True
+        For Each row As DataGridViewRow In clientsGrid.Rows
+            row.Cells("Selected").Value = selected
+        Next
+        _isLoadingClients = False
+        SaveClientSelection()
+    End Sub
+
+
+    Private Async Sub btnReloadClients_Click(sender As Object, e As EventArgs)
+        Await LoadClientsAsync(True)
     End Sub
 
 
@@ -383,9 +545,14 @@ Public Class SettingsForm
             settings.SshPrivateKeyFile =
                 txtSshPrivateKey.Text.Trim()
 
-            settings.SshPassphrase =
-                txtSshPassphrase.Text
+        settings.SshPassphrase =
+            txtSshPassphrase.Text
 
+        End If
+
+        Dim alertAfterInactivityMinutes As Integer
+        If Integer.TryParse(txtAlertAfterInactivityMinutes.Text, alertAfterInactivityMinutes) AndAlso alertAfterInactivityMinutes > 0 Then
+            settings.AlertAfterInactivityMinutes = alertAfterInactivityMinutes
         End If
 
 

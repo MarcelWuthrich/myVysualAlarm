@@ -85,6 +85,10 @@
     Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
         ' Configuration de l'icône dans la zone de notification
+        If myVysualAlarmNotifyIcon.Icon IsNot Nothing Then
+            Icon = myVysualAlarmNotifyIcon.Icon
+        End If
+
         myVysualAlarmNotifyIcon.Visible = True
         myVysualAlarmNotifyIcon.Text = "myVysualAlarm"
 
@@ -107,13 +111,6 @@
                 ShowMainWindow()
             End Sub
 
-        Dim settingsItem As New ToolStripMenuItem("Paramètres")
-
-        AddHandler settingsItem.Click,
-            Sub()
-                ShowSettings()
-            End Sub
-
         ' Élément permettant de quitter
         Dim exitItem As New ToolStripMenuItem("Quitter")
 
@@ -127,7 +124,6 @@
         menu.Items.Add(statusItem)
         menu.Items.Add(separator)
         menu.Items.Add(openItem)
-        menu.Items.Add(settingsItem)
         menu.Items.Add(exitItem)
 
         ' Association du menu à l'icône
@@ -140,6 +136,27 @@
             AddressOf MonitoringStatusChanged
 
         _monitoringService.Start()
+
+    End Sub
+
+
+    Private Sub settingsMenuItem_Click(
+        sender As Object,
+        e As EventArgs
+    ) Handles settingsMenuItem.Click
+
+        ShowSettings()
+
+    End Sub
+
+
+    Private Sub exitMenuItem_Click(
+        sender As Object,
+        e As EventArgs
+    ) Handles exitMenuItem.Click
+
+        _allowClose = True
+        Application.Exit()
 
     End Sub
 

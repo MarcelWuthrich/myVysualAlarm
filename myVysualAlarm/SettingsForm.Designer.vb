@@ -38,7 +38,7 @@ Partial Class SettingsForm
         btnTestConnection = New Button()
         btnSave = New Button()
         btnCancel = New Button()
-        lblConnectionStatus = New Label()
+        lblConnectionStatus = New TextBox()
         chkUseSsh = New CheckBox()
         grpSsh = New GroupBox()
         chkShowSshPassphrase = New CheckBox()
@@ -209,11 +209,12 @@ Partial Class SettingsForm
         ' 
         ' lblConnectionStatus
         ' 
-        lblConnectionStatus.AutoSize = True
         lblConnectionStatus.Location = New Point(28, 625)
         lblConnectionStatus.Size = New Size(594, 32)
+        lblConnectionStatus.Multiline = True
         lblConnectionStatus.Name = "lblConnectionStatus"
-        lblConnectionStatus.Size = New Size(124, 15)
+        lblConnectionStatus.ReadOnly = True
+        lblConnectionStatus.ScrollBars = ScrollBars.Vertical
         lblConnectionStatus.TabIndex = 13
         lblConnectionStatus.Text = ""
         ' 
@@ -416,7 +417,7 @@ Partial Class SettingsForm
     Friend WithEvents btnTestConnection As Button
     Friend WithEvents btnSave As Button
     Friend WithEvents btnCancel As Button
-    Friend WithEvents lblConnectionStatus As Label
+    Friend WithEvents lblConnectionStatus As TextBox
     Friend WithEvents chkUseSsh As CheckBox
     Friend WithEvents grpSsh As GroupBox
     Friend WithEvents lblSshPort As Label
