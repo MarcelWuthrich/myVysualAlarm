@@ -22,6 +22,8 @@ Public Class SettingsForm
     <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
     Public Property ConnectionManager As DatabaseConnectionManager
 
+    Public Event SettingsSaved()
+
     Private tabSettings As TabControl
     Private tabConnection As TabPage
     Private tabClients As TabPage
@@ -33,7 +35,7 @@ Public Class SettingsForm
     Private lblClientsInfo As Label
     Private _clientsLoaded As Boolean
     Private _isLoadingClients As Boolean
-    Private txtAlertAfterInactivityMinutes As TextBox
+    Private txtAlertAfterInactivityDays As TextBox
 
 
     Private Sub SettingsForm_Load(
@@ -193,9 +195,9 @@ Public Class SettingsForm
         btnReloadClients = New Button() With {.Text = "Relire la configuration DB", .Location = New Point(315, 655), .Size = New Size(200, 30), .Anchor = AnchorStyles.Bottom Or AnchorStyles.Right}
         tabClients.Controls.AddRange(New Control() {lblClientsInfo, clientsGrid, btnSelectAllClients, btnDeselectAllClients, btnReloadClients})
 
-        Dim lblAlertAfterInactivityMinutes As New Label() With {.AutoSize = True, .Location = New Point(24, 32), .Text = "Alerte après x minutes d'inactivité"}
-        txtAlertAfterInactivityMinutes = New TextBox() With {.Location = New Point(24, 58), .Size = New Size(120, 27), .Text = AppSettingsStore.Load().AlertAfterInactivityMinutes.ToString()}
-        tabParameters.Controls.AddRange(New Control() {lblAlertAfterInactivityMinutes, txtAlertAfterInactivityMinutes})
+        Dim lblAlertAfterInactivityDays As New Label() With {.AutoSize = True, .Location = New Point(24, 32), .Text = "Alerte après x jours d'inactivité"}
+        txtAlertAfterInactivityDays = New TextBox() With {.Location = New Point(24, 58), .Size = New Size(120, 27), .Text = AppSettingsStore.Load().AlertAfterInactivityDays.ToString()}
+        tabParameters.Controls.AddRange(New Control() {lblAlertAfterInactivityDays, txtAlertAfterInactivityDays})
 
         AddHandler tabSettings.SelectedIndexChanged, AddressOf tabSettings_SelectedIndexChanged
         AddHandler clientsGrid.CurrentCellDirtyStateChanged, AddressOf clientsGrid_CurrentCellDirtyStateChanged
@@ -550,9 +552,9 @@ Public Class SettingsForm
 
         End If
 
-        Dim alertAfterInactivityMinutes As Integer
-        If Integer.TryParse(txtAlertAfterInactivityMinutes.Text, alertAfterInactivityMinutes) AndAlso alertAfterInactivityMinutes > 0 Then
-            settings.AlertAfterInactivityMinutes = alertAfterInactivityMinutes
+        Dim alertAfterInactivityDays As Integer
+        If Integer.TryParse(txtAlertAfterInactivityDays.Text, alertAfterInactivityDays) AndAlso alertAfterInactivityDays > 0 Then
+            settings.AlertAfterInactivityDays = alertAfterInactivityDays
         End If
 
 
@@ -570,6 +572,7 @@ Public Class SettingsForm
     ) Handles btnSave.Click
 
         AppSettingsStore.Save(CreateSettingsFromForm())
+        RaiseEvent SettingsSaved()
 
     End Sub
 

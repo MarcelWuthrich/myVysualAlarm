@@ -33,7 +33,7 @@ Public NotInheritable Class AppSettingsStore
             settings.SshPrivateKeyFile = ReadString(key, "SshPrivateKeyFile", settings.SshPrivateKeyFile)
             settings.SshPassphrase = Unprotect(ReadString(key, "SshPassphrase", ""))
             settings.SshLocalPort = ReadInteger(key, "SshLocalPort", settings.SshLocalPort)
-            settings.AlertAfterInactivityMinutes = ReadInteger(key, "AlertAfterInactivityMinutes", settings.AlertAfterInactivityMinutes)
+            settings.AlertAfterInactivityDays = ReadInteger(key, "AlertAfterInactivityDays", ReadInteger(key, "AlertAfterInactivityMinutes", settings.AlertAfterInactivityDays))
         End Using
 
         Return settings
@@ -55,7 +55,7 @@ Public NotInheritable Class AppSettingsStore
             key.SetValue("SshPrivateKeyFile", settings.SshPrivateKeyFile)
             key.SetValue("SshPassphrase", Protect(settings.SshPassphrase))
             key.SetValue("SshLocalPort", settings.SshLocalPort)
-            key.SetValue("AlertAfterInactivityMinutes", settings.AlertAfterInactivityMinutes)
+            key.SetValue("AlertAfterInactivityDays", settings.AlertAfterInactivityDays)
         End Using
 
     End Sub

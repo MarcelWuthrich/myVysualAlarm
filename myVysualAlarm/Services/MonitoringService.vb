@@ -14,7 +14,11 @@ Public Class MonitoringService
 
     Public Sub Start()
         Dim firstCheck As Task = CheckStatusAsync()
-        _timer.Change(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10))
+        _timer.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1))
+    End Sub
+
+    Public Sub CheckNow()
+        Dim immediateCheck As Task = CheckStatusAsync()
     End Sub
 
     Public Sub [Stop]()
@@ -32,7 +36,7 @@ Public Class MonitoringService
         Try
             RaiseEvent StatusChanged(Await GetMonitoringResultAsync())
         Catch ex As Exception
-            RaiseEvent StatusChanged(New MonitoringResult With {.IsMonitoringActive = True, .Message = "Erreur de surveillance : " & ex.Message})
+            RaiseEvent StatusChanged(New MonitoringResult With {.IsMonitoringActive = True, .Message = "Problème avec la surveillance : " & ex.Message})
         Finally
             _checkLock.Release()
         End Try
@@ -43,7 +47,7 @@ Public Class MonitoringService
         Dim selectedClientIds As HashSet(Of String) = AppSettingsStore.LoadSelectedClientIds(hasSelection)
 
         If Not hasSelection OrElse selectedClientIds.Count = 0 Then
-            Return New MonitoringResult With {.IsMonitoringActive = True, .Message = "Aucun client sélectionné pour la surveillance."}
+            Return New MonitoringResult With {.IsMonitoringActive = True, .Message = "Problème avec la surveillance : aucun client sélectionné."}
         End If
 
         Dim settings As AppSettings = AppSettingsStore.Load()
@@ -78,19 +82,11 @@ Public Class MonitoringService
             End Using
         End Using
 
-        Dim latestActivity As DateTime? = Nothing
-        For Each client As MonitoringAlertClient In clients
-            If client.LastActivity.HasValue AndAlso (Not latestActivity.HasValue OrElse client.LastActivity.Value > latestActivity.Value) Then latestActivity = client.LastActivity
-        Next
-
+        ' Surveillance réelle : les dates stockées sont comparées à l'heure actuelle.
         Dim referenceDate As DateTime = DateTime.Now
-        If latestActivity.HasValue AndAlso latestActivity.Value < DateTime.Now.AddHours(-24) Then
-            referenceDate = latestActivity.Value
-            result.IsHistoricalDemoMode = True
-        End If
         result.ReferenceDate = referenceDate
 
-        Dim allowedDelay As TimeSpan = TimeSpan.FromMinutes(Math.Max(1, settings.AlertAfterInactivityMinutes))
+        Dim allowedDelay As TimeSpan = TimeSpan.FromDays(Math.Max(1, settings.AlertAfterInactivityDays))
         For Each client As MonitoringAlertClient In clients
             If Not client.LastActivity.HasValue Then
                 result.AlertClients.Add(client)
@@ -101,8 +97,8 @@ Public Class MonitoringService
         Next
 
         result.Message = If(result.AlertCount = 0,
-            If(result.IsHistoricalDemoMode, "Surveillance OK (mode démonstration : données historiques).", "Surveillance OK"),
-            $"{result.AlertCount} alarme(s) : activité absente depuis plus de {settings.AlertAfterInactivityMinutes} min.")
+            "Aucune alarme active",
+            $"{result.AlertCount} alarme(s) : activité absente depuis plus de {settings.AlertAfterInactivityDays} jour(s).")
 
         Return result
     End Function
