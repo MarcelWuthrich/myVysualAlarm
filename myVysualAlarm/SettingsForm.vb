@@ -36,6 +36,7 @@ Public Class SettingsForm
     Private _clientsLoaded As Boolean
     Private _isLoadingClients As Boolean
     Private txtAlertAfterInactivityDays As TextBox
+    Private txtAlertAfterInactivityMinutes As TextBox
 
 
     Private Sub SettingsForm_Load(
@@ -197,7 +198,9 @@ Public Class SettingsForm
 
         Dim lblAlertAfterInactivityDays As New Label() With {.AutoSize = True, .Location = New Point(24, 32), .Text = "Alerte après x jours d'inactivité"}
         txtAlertAfterInactivityDays = New TextBox() With {.Location = New Point(24, 58), .Size = New Size(120, 27), .Text = AppSettingsStore.Load().AlertAfterInactivityDays.ToString()}
-        tabParameters.Controls.AddRange(New Control() {lblAlertAfterInactivityDays, txtAlertAfterInactivityDays})
+        Dim lblAlertAfterInactivityMinutes As New Label() With {.AutoSize = True, .Location = New Point(24, 102), .Text = "Alerte après x minutes d'inactivité"}
+        txtAlertAfterInactivityMinutes = New TextBox() With {.Location = New Point(24, 128), .Size = New Size(120, 27), .Text = AppSettingsStore.Load().AlertAfterInactivityMinutes.ToString()}
+        tabParameters.Controls.AddRange(New Control() {lblAlertAfterInactivityDays, txtAlertAfterInactivityDays, lblAlertAfterInactivityMinutes, txtAlertAfterInactivityMinutes})
 
         AddHandler tabSettings.SelectedIndexChanged, AddressOf tabSettings_SelectedIndexChanged
         AddHandler clientsGrid.CurrentCellDirtyStateChanged, AddressOf clientsGrid_CurrentCellDirtyStateChanged
@@ -553,8 +556,13 @@ Public Class SettingsForm
         End If
 
         Dim alertAfterInactivityDays As Integer
-        If Integer.TryParse(txtAlertAfterInactivityDays.Text, alertAfterInactivityDays) AndAlso alertAfterInactivityDays > 0 Then
+        If Integer.TryParse(txtAlertAfterInactivityDays.Text, alertAfterInactivityDays) AndAlso alertAfterInactivityDays >= 0 Then
             settings.AlertAfterInactivityDays = alertAfterInactivityDays
+        End If
+
+        Dim alertAfterInactivityMinutes As Integer
+        If Integer.TryParse(txtAlertAfterInactivityMinutes.Text, alertAfterInactivityMinutes) AndAlso alertAfterInactivityMinutes >= 0 Then
+            settings.AlertAfterInactivityMinutes = alertAfterInactivityMinutes
         End If
 
 

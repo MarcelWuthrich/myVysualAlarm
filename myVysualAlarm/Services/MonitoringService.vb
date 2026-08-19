@@ -86,7 +86,7 @@ Public Class MonitoringService
         Dim referenceDate As DateTime = DateTime.Now
         result.ReferenceDate = referenceDate
 
-        Dim allowedDelay As TimeSpan = TimeSpan.FromDays(Math.Max(1, settings.AlertAfterInactivityDays))
+        Dim allowedDelay As TimeSpan = TimeSpan.FromDays(settings.AlertAfterInactivityDays).Add(TimeSpan.FromMinutes(settings.AlertAfterInactivityMinutes))
         For Each client As MonitoringAlertClient In clients
             If Not client.LastActivity.HasValue Then
                 result.AlertClients.Add(client)
@@ -98,7 +98,7 @@ Public Class MonitoringService
 
         result.Message = If(result.AlertCount = 0,
             "Aucune alarme active",
-            $"{result.AlertCount} alarme(s) : activité absente depuis plus de {settings.AlertAfterInactivityDays} jour(s).")
+            $"{result.AlertCount} alarme(s) : activité absente depuis plus de {settings.AlertAfterInactivityDays} jour(s) et {settings.AlertAfterInactivityMinutes} minute(s).")
 
         Return result
     End Function

@@ -33,7 +33,14 @@ Public NotInheritable Class AppSettingsStore
             settings.SshPrivateKeyFile = ReadString(key, "SshPrivateKeyFile", settings.SshPrivateKeyFile)
             settings.SshPassphrase = Unprotect(ReadString(key, "SshPassphrase", ""))
             settings.SshLocalPort = ReadInteger(key, "SshLocalPort", settings.SshLocalPort)
-            settings.AlertAfterInactivityDays = ReadInteger(key, "AlertAfterInactivityDays", ReadInteger(key, "AlertAfterInactivityMinutes", settings.AlertAfterInactivityDays))
+            If key.GetValue("AlertAfterInactivityDays") Is Nothing AndAlso key.GetValue("AlertAfterInactivityMinutes") IsNot Nothing Then
+                ' Migration de l'ancienne version : sa valeur en minutes représentait alors des jours.
+                settings.AlertAfterInactivityDays = ReadInteger(key, "AlertAfterInactivityMinutes", settings.AlertAfterInactivityDays)
+                settings.AlertAfterInactivityMinutes = 0
+            Else
+                settings.AlertAfterInactivityDays = ReadInteger(key, "AlertAfterInactivityDays", settings.AlertAfterInactivityDays)
+                settings.AlertAfterInactivityMinutes = ReadInteger(key, "AlertAfterInactivityMinutes", settings.AlertAfterInactivityMinutes)
+            End If
         End Using
 
         Return settings
@@ -56,6 +63,7 @@ Public NotInheritable Class AppSettingsStore
             key.SetValue("SshPassphrase", Protect(settings.SshPassphrase))
             key.SetValue("SshLocalPort", settings.SshLocalPort)
             key.SetValue("AlertAfterInactivityDays", settings.AlertAfterInactivityDays)
+            key.SetValue("AlertAfterInactivityMinutes", settings.AlertAfterInactivityMinutes)
         End Using
 
     End Sub

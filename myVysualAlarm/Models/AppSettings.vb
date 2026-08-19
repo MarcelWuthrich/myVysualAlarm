@@ -48,4 +48,6 @@
     ' Délai sans activité avant le déclenchement d'une alarme.
     Public Property AlertAfterInactivityDays As Integer = 10
 
+    Public Property AlertAfterInactivityMinutes As Integer = 0
+
 End Class
